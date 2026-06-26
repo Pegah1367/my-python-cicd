@@ -1,0 +1,56 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: python-cd-pipeline
+spec:
+  params:
+    - name: repo-url
+    - name: branch
+      default: "main"
+
+  tasks:
+    - name: clone
+      taskRef:
+        name: checkout
+      params:
+        - name: repo-url
+          value: "$(params.repo-url)"
+        - name: branch
+          value: "$(params.branch)"
+
+    - name: lint
+      taskRef:
+        name: echo
+      params:
+        - name: message
+          value: "Calling Flake8 linter for the Python project..."
+      runAfter:
+        - clone
+
+    - name: tests
+      taskRef:
+        name: echo
+      params:
+        - name: message
+          value: "Running unit tests with pytest..."
+      runAfter:
+        - lint
+
+    - name: build
+      taskRef:
+        name: echo
+      params:
+        - name: message
+          value: "Building the Python application package or container image..."
+      runAfter:
+        - tests
+
+    - name: deploy
+      taskRef:
+        name: echo
+      params:
+        - name: message
+          value: "Deploying $(params.branch) branch of $(params.repo-url)..."
+      runAfter:
+        - build
+        
